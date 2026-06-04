@@ -1,0 +1,104 @@
+name: Android Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        id: setup-java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: Build Web App
+        run: npm run build
+
+      - name: Generate Android Assets (Icons & Splash)
+        run: |
+          mkdir -p assets
+          
+          # Auto-detect logo/icon files from common locations in order of priority
+          SOURCE_ICON=""
+          if [ -f "assets/icon-only.png" ]; then
+            echo "Found assets/icon-only.png"
+            SOURCE_ICON="assets/icon-only.png"
+          elif [ -f "assets/icon-foreground.png" ]; then
+            echo "Found assets/icon-foreground.png"
+            SOURCE_ICON="assets/icon-foreground.png"
+          elif [ -f "assets/icon.png" ]; then
+            echo "Found assets/icon.png"
+            SOURCE_ICON="assets/icon.png"
+          elif [ -f "assets/logo.png" ]; then
+            echo "Found assets/logo.png"
+            SOURCE_ICON="assets/logo.png"
+          elif [ -f "public/logo.png" ]; then
+            echo "Found public/logo.png"
+            SOURCE_ICON="public/logo.png"
+          elif [ -f "logo.png" ]; then
+            echo "Found logo.png in root"
+            SOURCE_ICON="logo.png"
+          elif [ -f "public/pwa-512x512.png" ]; then
+            echo "Found public/pwa-512x512.png"
+            SOURCE_ICON="public/pwa-512x512.png"
+          fi
+          
+          if [ -n "$SOURCE_ICON" ]; then
+            echo "Using $SOURCE_ICON to generate Android Launcher Icons..."
+            mkdir -p assets
+            if [ "$SOURCE_ICON" != "assets/icon-only.png" ]; then
+              cp "$SOURCE_ICON" assets/icon-only.png
+            fi
+            # Copy to icon-foreground to generate ic_launcher_foreground.png for adaptive icons
+            cp "$SOURCE_ICON" assets/icon-foreground.png
+            
+            npm run generate-assets || true
+            
+            echo "Adaptive foreground and legacy PNG icons generated successfully."
+          else
+            echo "Warning: No logo or icon found at assets/icon-only.png or public/logo.png. Skipping launcher icon generation."
+          fi
+
+      - name: Capacitor Sync
+        run: npx cap sync android
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: 8.12
+
+      - name: Build with Gradle
+        run: |
+          cd android
+          # Use system gradle directly since wrapper jar is reported as corrupt
+          gradle assembleDebug --no-daemon --stacktrace
+        env:
+          JAVA_HOME: ${{ steps.setup-java.outputs.path }}
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug
+          path: android/app/build/outputs/apk/debug/app-debug.apk
