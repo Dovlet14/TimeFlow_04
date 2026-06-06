@@ -409,10 +409,14 @@ export default function App() {
       return;
     }
 
-    // Validate extension
-    const allowedExtensions = ['mp3', 'wav', 'ogg', 'm4a'];
+    // Validate extension/type
+    const allowedExtensions = ['mp3', 'wav', 'ogg', 'm4a', 'aac', 'flac'];
     const ext = file.name.split('.').pop()?.toLowerCase() || '';
-    if (!allowedExtensions.includes(ext) && !file.type.startsWith('audio/')) {
+    const isAudio = file.type.startsWith('audio/') || 
+                    file.type === 'application/octet-stream' ||
+                    allowedExtensions.includes(ext);
+
+    if (!isAudio) {
       alert("Неподдерживаемый формат аудио. Пожалуйста, используйте MP3, WAV, OGG или M4A.");
       return;
     }

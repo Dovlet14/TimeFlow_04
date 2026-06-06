@@ -44,11 +44,15 @@ export const saveCustomSound = async (
   type: string,
   file: File
 ): Promise<CustomSoundMetadata> => {
-  // Validate file type
-  const allowedExtensions = ['mp3', 'wav', 'ogg', 'm4a'];
+  // Validate file type - be more permissive for mobile webviews
+  const allowedExtensions = ['mp3', 'wav', 'ogg', 'm4a', 'aac', 'flac'];
   const fileExt = name.split('.').pop()?.toLowerCase() || '';
   
-  if (!allowedExtensions.includes(fileExt) && !type.startsWith('audio/')) {
+  const isAudioType = type.startsWith('audio/') || 
+                     type === 'application/octet-stream' || 
+                     allowedExtensions.includes(fileExt);
+
+  if (!isAudioType) {
     throw new Error('Неподдерживаемый формат аудио. Пожалуйста, используйте MP3, WAV, OGG или M4A.');
   }
 
