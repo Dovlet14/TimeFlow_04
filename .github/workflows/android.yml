@@ -73,6 +73,10 @@ jobs:
             
             npm run generate-assets || true
             
+            # Fix potential missing background resource reference in generated XML
+            sed -i 's/@mipmap\/ic_launcher_background/@drawable\/ic_launcher_background/g' android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml || true
+            sed -i 's/@mipmap\/ic_launcher_background/@drawable\/ic_launcher_background/g' android/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml || true
+            
             echo "Adaptive foreground and legacy PNG icons generated successfully."
           else
             echo "Warning: No logo or icon found at assets/icon-only.png or public/logo.png. Skipping launcher icon generation."
