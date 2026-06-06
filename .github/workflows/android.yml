@@ -84,6 +84,13 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Regenerate Gradle Wrapper
+        run: |
+          cd android
+          # Remove corrupt wrapper and regenerate it using installed gradle
+          rm -f gradle/wrapper/gradle-wrapper.jar
+          gradle wrapper --gradle-version 8.12 --distribution-type all
+
       - name: Build with Gradle
         run: |
           cd android
