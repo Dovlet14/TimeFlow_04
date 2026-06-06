@@ -1,6 +1,5 @@
 {
   "appId": "com.schedulepro.app",
   "appName": "Schedule Pro",
-  "webDir": "dist",
-  "bundledWebRuntime": false
+  "webDir": "dist"
 }

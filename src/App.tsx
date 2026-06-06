@@ -1247,11 +1247,10 @@ export default function App() {
       
       const regCount = tasks.filter(t => t.isCompleted && t.date === dStr).length;
       let recCount = 0;
-      Object.values(completedRecurringTasks).forEach(dates => {
-        if (Array.isArray(dates) && dates.includes(dStr)) {
-           recCount++;
-        }
-      });
+      const completedIdsOnDate = completedRecurringTasks[dStr];
+      if (Array.isArray(completedIdsOnDate)) {
+        recCount = completedIdsOnDate.length;
+      }
       
       data.push({
         name: daysName[d.getDay()],
